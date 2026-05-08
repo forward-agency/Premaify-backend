@@ -4,6 +4,7 @@ import Premaify.com.example.web.model.Product;
 import Premaify.com.example.web.repository.ProductRepository;
 import Premaify.com.example.web.service.LeadService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,22 +41,26 @@ public class ProductController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public Product createProduct(@RequestBody Product product) {
         return productRepository.save(product);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public Product updateProduct(@PathVariable String id, @RequestBody Product product) {
         product.setId(id);
         return productRepository.save(product);
     }
 
     @PutMapping("/{id}/stock")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public Product updateStock(@PathVariable String id, @RequestBody Map<String, Integer> payload) {
         return leadService.updateStock(id, payload.getOrDefault("stockQuantity", 0));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable String id) {
         productRepository.deleteById(id);
         return ResponseEntity.noContent().build();

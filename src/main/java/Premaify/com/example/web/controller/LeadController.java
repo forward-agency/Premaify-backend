@@ -3,6 +3,7 @@ package Premaify.com.example.web.controller;
 import Premaify.com.example.web.model.Lead;
 import Premaify.com.example.web.repository.LeadRepository;
 import Premaify.com.example.web.service.LeadService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -11,8 +12,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -27,8 +30,13 @@ public class LeadController {
     }
 
     @GetMapping
-    public List<Lead> listLeads() {
-        return leadRepository.findAllByOrderByIdDesc();
+    public List<Lead> listLeads(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String datePreset,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate
+    ) {
+        return leadService.listLeads(status, datePreset, startDate, endDate);
     }
 
     @PostMapping
@@ -47,6 +55,7 @@ public class LeadController {
     }
 
     @DeleteMapping
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public void deleteAllLeads() {
         leadRepository.deleteAll();
     }

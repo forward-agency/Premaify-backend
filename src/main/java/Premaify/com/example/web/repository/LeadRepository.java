@@ -2,9 +2,10 @@ package Premaify.com.example.web.repository;
 
 import Premaify.com.example.web.model.Lead;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 
-public interface LeadRepository extends JpaRepository<Lead, Long> {
+public interface LeadRepository extends JpaRepository<Lead, Long>, JpaSpecificationExecutor<Lead> {
     List<Lead> findAllByOrderByIdDesc();
 }

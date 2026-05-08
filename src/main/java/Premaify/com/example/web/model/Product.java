@@ -25,6 +25,7 @@ public class Product {
     private String stockLabel;
     private Integer stockQuantity;
     private String tone;
+    private Boolean fastMoving = false;
 
     @Column(length = 1000)
     private String specs;
@@ -36,6 +37,10 @@ public class Product {
 
     @Lob
     private String imageUrl;
+    @Lob
+    private String imageUrl2;
+    @Lob
+    private String imageUrl3;
 
     public String getId() {
         return id;
@@ -149,6 +154,14 @@ public class Product {
         this.tone = tone;
     }
 
+    public Boolean getFastMoving() {
+        return fastMoving;
+    }
+
+    public void setFastMoving(Boolean fastMoving) {
+        this.fastMoving = fastMoving;
+    }
+
     public String getSpecs() {
         return specs;
     }
@@ -195,5 +208,21 @@ public class Product {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getImageUrl2() {
+        return imageUrl2;
+    }
+
+    public void setImageUrl2(String imageUrl2) {
+        this.imageUrl2 = imageUrl2;
+    }
+
+    public String getImageUrl3() {
+        return imageUrl3;
+    }
+
+    public void setImageUrl3(String imageUrl3) {
+        this.imageUrl3 = imageUrl3;
     }
 }

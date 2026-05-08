@@ -17,8 +17,8 @@ public class OrderLog {
 
     private String product;
     private String customer;
+    private String type = "Order";
     private LocalDate date = LocalDate.now();
-    private String paymentType;
     private Long leadId;
 
     public Long getId() {
@@ -45,20 +45,20 @@ public class OrderLog {
         this.customer = customer;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public LocalDate getDate() {
         return date;
     }
 
     public void setDate(LocalDate date) {
         this.date = date;
-    }
-
-    public String getPaymentType() {
-        return paymentType;
-    }
-
-    public void setPaymentType(String paymentType) {
-        this.paymentType = paymentType;
     }
 
     public Long getLeadId() {
