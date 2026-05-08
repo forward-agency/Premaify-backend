@@ -18,7 +18,10 @@ public class MailConfig {
             @Value("${spring.mail.password:}") String password,
             @Value("${spring.mail.properties.mail.smtp.auth:true}") boolean smtpAuth,
             @Value("${spring.mail.properties.mail.smtp.starttls.enable:true}") boolean startTlsEnabled,
-            @Value("${spring.mail.properties.mail.smtp.starttls.required:true}") boolean startTlsRequired
+            @Value("${spring.mail.properties.mail.smtp.starttls.required:true}") boolean startTlsRequired,
+            @Value("${spring.mail.properties.mail.smtp.connectiontimeout:10000}") int connectionTimeout,
+            @Value("${spring.mail.properties.mail.smtp.timeout:10000}") int timeout,
+            @Value("${spring.mail.properties.mail.smtp.writetimeout:10000}") int writeTimeout
     ) {
         JavaMailSenderImpl sender = new JavaMailSenderImpl();
         sender.setHost(host);
@@ -30,6 +33,9 @@ public class MailConfig {
         properties.put("mail.smtp.auth", smtpAuth);
         properties.put("mail.smtp.starttls.enable", startTlsEnabled);
         properties.put("mail.smtp.starttls.required", startTlsRequired);
+        properties.put("mail.smtp.connectiontimeout", connectionTimeout);
+        properties.put("mail.smtp.timeout", timeout);
+        properties.put("mail.smtp.writetimeout", writeTimeout);
         return sender;
     }
 }

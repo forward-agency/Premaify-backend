@@ -11,8 +11,13 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
@@ -20,9 +25,12 @@ import java.util.Optional;
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
     private static final DateTimeFormatter SUBMITTED_TIME_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
+    private static final URI BREVO_EMAIL_API_URI = URI.create("https://api.brevo.com/v3/smtp/email");
 
     private final JavaMailSender mailSender;
     private final ProductRepository productRepository;
+    private final HttpClient httpClient;
+    private final String brevoApiKey;
     private final String fromEmail;
     private final String adminEmail;
     private final String siteBaseUrl;
@@ -30,12 +38,15 @@ public class EmailService {
     public EmailService(
             JavaMailSender mailSender,
             ProductRepository productRepository,
+            @Value("${brevo.api.key:}") String brevoApiKey,
             @Value("${premaify.mail.from:}") String fromEmail,
             @Value("${premaify.mail.admin-to:premaify@gmail.com}") String adminEmail,
             @Value("${premaify.site.base-url:https://www.premaify.com}") String siteBaseUrl
     ) {
         this.mailSender = mailSender;
         this.productRepository = productRepository;
+        this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        this.brevoApiKey = brevoApiKey;
         this.fromEmail = fromEmail;
         this.adminEmail = adminEmail;
         this.siteBaseUrl = siteBaseUrl;
@@ -56,6 +67,11 @@ public class EmailService {
                 return;
             }
 
+            if (brevoApiKey != null && !brevoApiKey.isBlank()) {
+                sendWithBrevoApi(subject, body, leadId);
+                return;
+            }
+
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, StandardCharsets.UTF_8.name());
             helper.setFrom(fromEmail);
@@ -67,6 +83,30 @@ public class EmailService {
         } catch (Exception exception) {
             logger.error("Unable to send admin email notification for lead {}", leadId, exception);
         }
+    }
+
+    private void sendWithBrevoApi(String subject, String body, Long leadId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(BREVO_EMAIL_API_URI)
+                .timeout(Duration.ofSeconds(15))
+                .header("api-key", brevoApiKey)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(buildBrevoPayload(subject, body), StandardCharsets.UTF_8))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new IllegalStateException("Brevo API email failed with status " + response.statusCode() + ": " + response.body());
+        }
+        logger.info("Admin email notification sent for lead {} to {} using Brevo API", leadId, adminEmail);
+    }
+
+    private String buildBrevoPayload(String subject, String body) {
+        return "{"
+                + "\"sender\":{\"name\":\"Premaify\",\"email\":\"" + jsonEscape(fromEmail) + "\"},"
+                + "\"to\":[{\"email\":\"" + jsonEscape(adminEmail) + "\"}],"
+                + "\"subject\":\"" + jsonEscape(subject) + "\","
+                + "\"htmlContent\":\"" + jsonEscape(body) + "\""
+                + "}";
     }
 
     private String buildOrderBody(Lead lead) {
@@ -165,6 +205,17 @@ public class EmailService {
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;");
+    }
+
+    private String jsonEscape(String value) {
+        return safe(value)
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\b", "\\b")
+                .replace("\f", "\\f")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     private String submittedTime(Lead lead) {
