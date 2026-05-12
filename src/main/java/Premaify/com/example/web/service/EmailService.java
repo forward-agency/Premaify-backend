@@ -20,6 +20,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+
+import org.springframework.scheduling.annotation.Async;
 
 @Service
 public class EmailService {
@@ -45,17 +48,22 @@ public class EmailService {
     ) {
         this.mailSender = mailSender;
         this.productRepository = productRepository;
-        this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .executor(Executors.newFixedThreadPool(5))
+                .build();
         this.brevoApiKey = brevoApiKey;
         this.fromEmail = fromEmail;
         this.adminEmail = adminEmail;
         this.siteBaseUrl = siteBaseUrl;
     }
 
+    @Async
     public void sendOrderNotification(Lead lead) {
         sendNotification("New Laptop Order Received", buildOrderBody(lead), lead.getId());
     }
 
+    @Async
     public void sendEnquiryNotification(Lead lead) {
         sendNotification("New Customer Enquiry Received", buildEnquiryBody(lead), lead.getId());
     }

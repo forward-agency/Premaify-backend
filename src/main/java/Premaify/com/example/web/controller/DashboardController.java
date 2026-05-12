@@ -23,12 +23,8 @@ public class DashboardController {
     public Map<String, Long> summary() {
         long totalProducts = productRepository.count();
         long totalLeads = leadRepository.count();
-        long activeListings = productRepository.findAll().stream()
-                .filter(product -> product.getStockQuantity() != null && product.getStockQuantity() > 0)
-                .count();
-        long inventoryCount = productRepository.findAll().stream()
-                .mapToLong(product -> product.getStockQuantity() == null ? 0 : product.getStockQuantity())
-                .sum();
+        long activeListings = productRepository.countByStockQuantityGreaterThan(0);
+        long inventoryCount = productRepository.sumStockQuantity() == null ? 0 : productRepository.sumStockQuantity();
 
         return Map.of(
                 "totalProducts", totalProducts,
